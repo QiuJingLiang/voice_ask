@@ -1,0 +1,87 @@
+如何提高Android用户体验
+热17已有 128 次阅读  2011-03-31 08:56   标签:  Android  
+出色的用户体验有三个特征：速度快、响应及时以及无缝。下面的信息帮助你的应用如何能够在Android上实现这些特征。
+一、速度快
+你不能假设手机与桌面系统和服务器一样提速，更多的是你要关注你的代码是否高效。
+编写高效的Android代码，应遵循两个原则：
+不要做不必要的事
+不要分配不必要的内存
+以下是一些达到此目标的小技巧（有一些技巧是与oo的原则冲突，斟酌使用场景）：
+
+1、避免建立对象
+例如，int数组比Integer数组好，同理，这适用于所有基本类型的组合
+
+2、使用本地方法
+不要吝惜使用String.indexOf(), String.lastIndexOf()等特殊实现的方法(specialty methods)。这些方法都是使用C/C++实现的
+
+3、使用实现类比接口好
+Map myMap1 = new HashMap();
+HashMap myMap2 = new HashMap();
+调用一个接口的引用会比调用实体类的引用多花费一倍的时间
+
+4、不用getter和setter
+应该直接访问变量
+
+5、将成员变量缓存到本地
+for (int i = 0; i< this.mCount; i++)           
+
+    dumpItem(this.mItems[i]);
+
+最好改成这样：
+　　int count = this.mCount;
+　　Item[] items = this.mItems;
+　　for (int i = 0; i< count; i++) dumpItems(items[i]);
+另外，永远不要在for的第二个条件中调用任何方法
+
+6、给常量加上final
+static int intVal = 42;
+static String strVal = “Hello, world!”;
+　　编译器会生成一个叫做的初始化类的方法，当类第一次被使用的时候这个方法会被执行。方法会将42赋给intVal，然后把一个指向类中常量表的引用赋给strVal。当以后要用到这些值的时候，会在成员变量表中查找到他们。
+static final int intVal = 42;
+static final String strVal = “Hello, world!”;
+　　现在，类不再需要方法，因为在成员变量初始化的时候，会将常量直接保存到类文件中。用到intVal的代码被直接替换成42，而使用strVal的会指向一个字符串常量，而不是使用成员变量。
+
+7、谨慎使用foreach
+　　foreach可以用在实现了Iterable接口的集合类型上。foreach会给这些对象分配一个iterator，然后调用hasNext() 和next()方法。你最好使用foreach处理ArrayList对象，但是对其他集合对象，foreach相当于使用 iterator
+
+8、避免使用枚举
+　　枚举变量非常方便，但不幸的是它会牺牲执行的速度和并大幅增加文件体积
+
+9、将内部类需要访问的外部变量或方法声明在包范围内
+public class Foo {
+　　private int mValue;
+　　public void run() {
+    　　Inner in = new Inner();
+    　　mValue = 27;
+    　　in.stuff();
+　　}
+　　private class Inner {
+    　　void stuff() {
+　　    System.out.println(Foo.this.mValue);
+    　　}
+　　}
+}
+Foo$Inner是一个完全独立的类，它要直接访问Foo的私有成员是非法的。编译器会自动生成一个方法：
+/*package*/ static int Foo.access$100(Foo foo) {
+　　return foo.mValue;
+}
+内部类在每次访问”mValue”方法时，都会调用这个静态方法。同理，内部类要访问私有方法也是如此。
+
+10、避免使用浮点数
+嵌入式处理器通常没有支持浮点运算的硬件，所有对”float”和”double”的运算都是通过软件实现的
+通过将内部类访问的变量和函数声明由私有范围改为包范围，我们可以避免这个问题。这样做可以让代码运行更快，并且避免产生额外的静态方法。(遗憾的是，这些成员变量和方法可以被同一个包内的其他类直接访问，这与经典的OO原则相违背。因此当你设计的时候应该谨慎使用这条优化原则)
+
+二、响应及时
+1、将耗时工作交到子线程
+
+2、如果你的程序在后台处理用户的输入，给出一个你正在工作的提示(ProgressBar(进度条)和ProgressDialog(进度对话框)是很好的选择)
+
+3、如果是游戏，把计算步骤放在子线程中
+
+
+三、无缝
+1、不要丢失数据，继承onPause()方法
+
+2、利用ContentProvider来共享数据
+
+3、不要打断用户，使用通知
